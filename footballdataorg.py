@@ -100,11 +100,11 @@ def render(result, second_name):
         updated=datetime.now().strftime("%d-%m %H:%M"),
     )
 
-    os.makedirs("dist", exist_ok=True)
-    with open("dist/index.html", "w", encoding="utf-8") as f:
+    os.makedirs("docs", exist_ok=True)
+    with open("docs/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("HTML gegenereerd in dist/index.html")
-    
+    print("HTML gegenereerd in docs/index.html")
+
 # ==== Script uitvoering ====
 if __name__ == "__main__":
     stand = get_standings()
