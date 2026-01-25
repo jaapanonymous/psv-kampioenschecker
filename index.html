@@ -6,10 +6,19 @@
 </head>
 <body>
   <h1>🏆 PSV Kampioenschecker</h1>
+  <br> </br>
   <p><strong>Vroegst mogelijke kampioenswedstrijd:</strong></p>
-  <p>📅 Saturday 04 April</p>
-  <p>⚽ PSV – FC Utrecht</p>
-  <p>📊 PSV: 79 | Max Feyenoord Rotterdam: 51</p>
-  <p style="font-size:0.8em;">Laatst bijgewerkt: 23-01 17:09</p>
+  <p>📅 {{ date }} - ⚽ PSV – {{ opponent }}</p>
+  <br> </br>
+  <p> Bij winst:</p>
+  <p>📊 PSV: {{ psv_points }} | Max {{ second_name }}: {{ max_second }}</p>
+  <p>💡 Puntenverschil: {{ points_gap }}</p>
+  <p>📌 Wedstrijden voor het einde van de competitie: {{ matches_after }}</p>
+  <br> </br>
+  <p>📈 Wedstrijden gespeeld:</p>
+  <p>PSV gespeeld: {{ psv_played }} | nog te spelen: {{ psv_remaining }}</p>
+  <p>{{ second_name }} gespeeld: {{ second_played }} | nog te spelen: {{ second_remaining }}</p>
+
+  <p style="font-size:0.8em;">Laatst bijgewerkt: {{ updated }}</p>
 </body>
 </html>

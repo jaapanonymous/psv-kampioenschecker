@@ -5,114 +5,155 @@ import os
 import ssl
 import warnings
 
-# ==== SSL en warnings fix voor Windows ====
+# ==== SSL fix (Windows) ====
 ssl._create_default_https_context = ssl._create_unverified_context
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
-# ==== API instellingen ====
+# ==== Config ====
 API_KEY = "f79a7defb5d74795b3e267b69bc442b0"
 HEADERS = {"X-Auth-Token": API_KEY}
-COMPETITION_CODE = "DED"  # Eredivisie
-PSV_ID = 674  # PSV team id in football-data.org
 
-# ==== Functies ====
+COMPETITION_CODE = "DED"
+PSV_ID = 674
+TOTAL_MATCHES = 34
+
+
+# ==== Standings ophalen ====
 def get_standings():
     url = f"https://api.football-data.org/v4/competitions/{COMPETITION_CODE}/standings"
-    resp = requests.get(url, headers=HEADERS, verify=False)
-    print("Standings API status:", resp.status_code)
-    print("Response text:", resp.text[:500])  # eerste 500 tekens
+    r = requests.get(url, headers=HEADERS, verify=False)
+    r.raise_for_status()
 
-    if resp.status_code != 200:
-        raise Exception(f"Fout bij ophalen standings: {resp.text}")
+    table = r.json()["standings"][0]["table"]
 
-    data = resp.json()
-    table = data["standings"][0]["table"]
-
-    psv = next((team for team in table if team["team"]["id"] == PSV_ID), None)
+    psv = next(t for t in table if t["team"]["id"] == PSV_ID)
     second = table[1] if table[0]["team"]["id"] == PSV_ID else table[0]
-
-    if not psv or not second:
-        raise Exception("Kan PSV of nummer 2 niet vinden in standings.")
 
     return {
         "psv_points": psv["points"],
+        "psv_played": psv["playedGames"],
         "second_name": second["team"]["name"],
         "second_points": second["points"],
+        "second_played": second["playedGames"],
     }
 
+
+# ==== PSV fixtures ophalen ====
 def get_psv_fixtures():
-    url = "https://api.football-data.org/v4/teams/{}/matches".format(PSV_ID)
-    resp = requests.get(
+    url = f"https://api.football-data.org/v4/teams/{PSV_ID}/matches"
+    r = requests.get(
         url,
         headers=HEADERS,
         params={"status": "SCHEDULED", "competitions": COMPETITION_CODE},
         verify=False
     )
-    print("Fixtures API status:", resp.status_code)
-    print("Response text:", resp.text[:500])
-
-    if resp.status_code != 200:
-        raise Exception(f"Fout bij ophalen fixtures: {resp.text}")
+    r.raise_for_status()
 
     fixtures = []
-    for f in resp.json()["matches"]:
-        fixture_date = datetime.fromisoformat(f["utcDate"].replace("Z", ""))
-        home = f["homeTeam"]["name"]
-        away = f["awayTeam"]["name"]
-        opponent = away if home == "PSV" else home
-        fixtures.append({"date": fixture_date, "opponent": opponent})
+    for m in r.json()["matches"]:
+        fixtures.append({
+            "date": datetime.fromisoformat(m["utcDate"].replace("Z", "")),
+            "opponent": m["awayTeam"]["name"]
+            if m["homeTeam"]["name"] == "PSV"
+            else m["homeTeam"]["name"]
+        })
 
-    fixtures.sort(key=lambda x: x["date"])  # sorteer op datum
+    fixtures.sort(key=lambda x: x["date"])
     return fixtures
 
-def calculate_championship(psv_points, second_points, fixtures):
-    """
-    Bereken de eerste wedstrijd waarop PSV niet meer kan worden ingehaald.
-    """
-    remaining_matches = len(fixtures)
-    current_gap = psv_points - second_points
 
-    for i, match in enumerate(fixtures, start=1):
-        max_second_remaining_points = (remaining_matches - i) * 3
-        if current_gap > max_second_remaining_points:
-            return {
-                "date": match["date"],
-                "opponent": match["opponent"],
-                "psv_points": psv_points,
-                "second_points_max": second_points + max_second_remaining_points,
-            }
-        # Simuleer PSV wint de wedstrijd (voor volgorde)
-        psv_points += 3
+# ==== Kernlogica: kampioensberekening ====
+def calculate_championship(psv_points, second_points, fixtures, psv_played, second_played):
+    # Maximaal aantal punten nummer 2 kan nog behalen
+    remaining_second = TOTAL_MATCHES - second_played
+    max_second_points = second_points + remaining_second * 3
 
-    return None
+    # Punten die PSV nodig heeft om zeker kampioen te zijn
+    points_needed_psv = max_second_points + 1
+    points_to_win = points_needed_psv - psv_points
 
-def render(result, second_name):
-    # Open template met utf-8 encoding
-    with open("index.html", encoding="utf-8") as file:
-        template = Template(file.read())
+    if points_to_win <= 0:
+        # PSV al kampioen
+        return {
+            "date": None,
+            "opponent": None,
+            "psv_points": psv_points,
+            "max_second_points": max_second_points,
+            "matches_after": TOTAL_MATCHES - psv_played
+        }
+
+    # Bepaal hoeveel wedstrijden PSV minimaal moet winnen
+    matches_needed = (points_to_win + 2) // 3  # +2 voor afronding naar boven
+
+    if matches_needed > len(fixtures):
+        # PSV kan niet kampioen worden met de resterende wedstrijden (theoretisch)
+        return None
+
+    kampioenswedstrijd = fixtures[matches_needed - 1]
+
+    matches_after = TOTAL_MATCHES - (psv_played + matches_needed)
+
+    return {
+        "date": kampioenswedstrijd["date"],
+        "opponent": kampioenswedstrijd["opponent"],
+        "psv_points": points_needed_psv,
+        "max_second_points": max_second_points,
+        "matches_after": matches_after,
+    }
+
+
+# ==== HTML renderen ====
+def render(result, stand):
+    with open("index.html", encoding="utf-8") as f:
+        template = Template(f.read())
+
+    psv_remaining_now = TOTAL_MATCHES - stand["psv_played"]
+    second_remaining_now = TOTAL_MATCHES - stand["second_played"]
+    points_gap_now = result["psv_points"] - result["max_second_points"] if result else 0
 
     html = template.render(
         date=result["date"].strftime("%A %d %B") if result else "Nog onbekend",
         opponent=result["opponent"] if result else "-",
-        psv_points=result["psv_points"] if result else "-",
-        max_second=result["second_points_max"] if result else "-",
-        second_name=second_name,
+        psv_points=result["psv_points"] if result else stand["psv_points"],
+        max_second=result["max_second_points"] if result else stand["second_points"],
+        second_name=stand["second_name"],
+        points_gap=points_gap_now,
+        matches_after=result["matches_after"] if result else "-",
+        psv_played=stand["psv_played"],
+        psv_remaining=psv_remaining_now,
+        second_played=stand["second_played"],
+        second_remaining=second_remaining_now,
         updated=datetime.now().strftime("%d-%m %H:%M"),
     )
 
     os.makedirs("docs", exist_ok=True)
     with open("docs/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("HTML gegenereerd in docs/index.html")
 
-# ==== Script uitvoering ====
+
+# ==== Main ====
 if __name__ == "__main__":
     stand = get_standings()
     fixtures = get_psv_fixtures()
-    result = calculate_championship(stand["psv_points"], stand["second_points"], fixtures)
-    render(result, stand["second_name"])
+
+    result = calculate_championship(
+        stand["psv_points"],
+        stand["second_points"],
+        fixtures,
+        stand["psv_played"],
+        stand["second_played"]
+    )
+
+    render(result, stand)
 
     if result:
-        print(f"PSV kan niet meer ingehaald worden vanaf {result['date'].strftime('%d-%m-%Y')} tegen {result['opponent']}")
+        if result["date"]:
+            print(
+                f"PSV is kampioen vanaf {result['date'].strftime('%d-%m-%Y')} "
+                f"tegen {result['opponent']} "
+                f"({result['matches_after']} wedstrijden voor het einde)"
+            )
+        else:
+            print("PSV is al kampioen!")
     else:
-        print("PSV kan theoretisch nog ingehaald worden tot het einde van het seizoen.")
+        print("PSV kan theoretisch nog ingehaald worden.")
