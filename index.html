@@ -2,11 +2,11 @@
 <html lang="nl">
 <head>
   <style>
-  h1.display-4 {
-    font-weight: 600;          /* extra dik gedrukt */
-    font-size: 4rem;           /* groter dan standaard */
-    text-shadow: 2px 2px 4px #000000;  /* geeft diepte en betere leesbaarheid */
-  }
+ h1.display-4 {
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 4rem); /* minimum 2rem, schaal met viewport tot max 4rem */
+  text-shadow: 2px 2px 4px #000000;
+}
 </style>
   <style>
   body {
