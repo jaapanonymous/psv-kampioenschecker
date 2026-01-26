@@ -1,24 +1,94 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta name="viewport" content="width=device-width">
-  <title>PSV Kampioenschecker</title>
-</head>
-<body>
-  <h1>🏆 PSV Kampioenschecker</h1>
-  <br> </br>
-  <p><strong>Vroegst mogelijke kampioenswedstrijd:</strong></p>
-  <p>📅 {{ date }} - ⚽ PSV – {{ opponent }}</p>
-  <br> </br>
-  <p> Bij winst:</p>
-  <p>📊 PSV: {{ psv_points }} | Max {{ second_name }}: {{ max_second }}</p>
-  <p>💡 Puntenverschil: {{ points_gap }}</p>
-  <p>📌 Wedstrijden voor het einde van de competitie: {{ matches_after }}</p>
-  <br> </br>
-  <p>📈 Wedstrijden gespeeld:</p>
-  <p>PSV gespeeld: {{ psv_played }} | nog te spelen: {{ psv_remaining }}</p>
-  <p>{{ second_name }} gespeeld: {{ second_played }} | nog te spelen: {{ second_remaining }}</p>
+  <style>
+  h1.display-4 {
+    font-weight: 600;          /* extra dik gedrukt */
+    font-size: 4rem;           /* groter dan standaard */
+    text-shadow: 2px 2px 4px #000000;  /* geeft diepte en betere leesbaarheid */
+  }
+</style>
+  <style>
+  body {
+    /* Rode-witte verticale strepen zoals PSV-shirt */
+    background: repeating-linear-gradient(
+      90deg,       /* 90 graden = verticaal */
+      #da291c,     /* PSV rood */
+      #da291c 50px,
+      #ffffff 50px, /* wit */
+      #ffffff 100px
+    );
+    min-height: 100vh;
+  }
 
-  <p style="font-size:0.8em;">Laatst bijgewerkt: {{ updated }}</p>
+  /* Cards iets transparant zodat strepen zichtbaar blijven */
+  .card {
+    background-color: rgba(255, 255, 255, 0.9); /* wit met lichte transparantie */
+  }
+  
+  
+</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Live PSV Kampioenschecker met scenario's en puntenstand">
+  <title>PSV Kampioenschecker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  
+   
+    
+</head>
+
+<body>
+  <div class="container my-4">
+    <!-- Header -->
+    <header class="text-center mb-4">
+     
+      <h1 class="display-4">🏆 PSV Kampioenschecker 🏆</h1>
+      <p class="fw-bold">Live scenario's en puntenstand van PSV</p>
+    </header>
+
+    <!-- Main content + Sidebar -->
+    <div class="row">
+      <!-- Main tracker content -->
+      <div class="col-lg-8 mb-4">
+        <div class="card p-3 shadow-sm mb-3">
+          <h5 class="card-title">Vroegst mogelijke kampioenswedstrijd</h5>
+          <p class="card-text">📅 {{ date }} - ⚽ PSV – {{ opponent }}</p>
+        </div>
+
+        <div class="card p-3 shadow-sm mb-3">
+          <h5 class="card-title">Scenario bij winst</h5>
+          <p class="card-text">📊 PSV: {{ psv_points }} | Max {{ second_name }}: {{ max_second }}</p>
+          <p class="card-text">💡 Puntenverschil: {{ points_gap }}</p>
+          <p class="card-text">📌 Wedstrijden voor het einde van de competitie: {{ matches_after }}</p>
+        </div>
+
+        <div class="card p-3 shadow-sm mb-3">
+          <h5 class="card-title">Wedstrijden gespeeld</h5>
+          <p class="card-text">PSV gespeeld: {{ psv_played }} | Nog te spelen: {{ psv_remaining }}</p>
+          <p class="card-text">{{ second_name }} gespeeld: {{ second_played }} | Nog te spelen: {{ second_remaining }}</p>
+        </div>
+
+        <p class="fw-bold">Laatst bijgewerkt: {{ updated }}</p>
+      </div>
+
+      <!-- Sidebar (voor webshop / extra info) -->
+      <div class="col-lg-4">
+        <div class="card p-3 shadow-sm mb-3">
+          <h5 class="card-title">Webshop / extra info</h5>
+          <p class="card-text">Hier kun je later merchandise, affiliate links of producten tonen.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3 text-muted">
+      &copy; <p class="fw-bold">2026 Jaap</p>
+
+      
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
