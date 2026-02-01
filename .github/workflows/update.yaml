@@ -2,8 +2,8 @@ name: Update Kampioenschecker
 
 on:
   schedule:
-    - cron: '0 12 * * *'   # draait elke dag om 12:00
-  workflow_dispatch:       # ook handmatig triggerbaar
+    - cron: '*/15 * * * *'   # elke 15 minuten
+  workflow_dispatch:         # ook handmatig triggerbaar
 
 jobs:
   update:
@@ -13,7 +13,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # volledig git history nodig om te committen
+        fetch-depth: 0  # volledige git history nodig om te committen
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests
+        pip install -r requirements.txt
 
     - name: Run footballdataorg script
       run: |
