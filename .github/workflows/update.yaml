@@ -1,5 +1,8 @@
 name: Update Kampioenschecker
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '*/15 * * * *'   # elke 15 minuten
