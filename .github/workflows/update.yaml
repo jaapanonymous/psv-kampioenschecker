@@ -20,9 +20,14 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: Install dependencies
+        run: |
+    python -m pip install --upgrade pip
+    pip install requests
+
     - name: Run footballdataorg script
       run: |
-        python footballdataorg.py
+    python footballdataorg.py
 
     - name: Commit changes
       run: |
