@@ -1,0 +1,16 @@
+[project]
+name = "psv-kampioenschecker"
+version = "0.1.0"
+description = "Check wanneer PSV kampioen wordt"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "requests",
+    "python-dotenv",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
