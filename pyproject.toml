@@ -8,8 +8,10 @@ dependencies = [
     "uvicorn[standard]",
     "requests",
     "python-dotenv",
+    "jinja2",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.uv]
+managed = true
+package = false
+
