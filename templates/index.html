@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PSV Kampioenschecker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1;
+    background: repeating-linear-gradient(90deg, #da291c, #da291c 50px, #ffffff 50px, #ffffff 100px);
+  }
+  .segment { position: absolute; background-color: white; border-radius: 2px; }
+  .segment.a,.segment.d,.segment.g { width: 70%; height: 0.2rem; left: 15%; }
+  .segment.b,.segment.c,.segment.e,.segment.f { width: 0.2rem; height: 40%; }
+  .segment.a { top:0 } .segment.b { top:0.1rem; right:0 } .segment.c { bottom:0.1rem; right:0 }
+  .segment.d { bottom:0 } .segment.e { bottom:0.1rem; left:0 } .segment.f { top:0.1rem; left:0 }
+  .segment.g { top:50%; transform:translateY(-50%) }
+  #header { font-weight: bold; white-space: nowrap; display: inline-block; line-height: 1.2; visibility: hidden; }
+  .digit { width: clamp(1.2rem, 4vw, 2rem); height: clamp(2.2rem, 7vw, 3rem); }
+  .match-container { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 120px; }
+  .fit-text { width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(1.2rem, 6vw, 2.2rem); margin: auto 0; }
+  .gold-mode { background: linear-gradient(45deg, #ffd700, #ff8c00); color: black !important; }
+</style>
+</head>
+<body class="min-h-screen font-semibold">
+
+<div class="max-w-4xl mx-auto px-4 pt-12 pb-8 grid gap-6 grid-cols-1 md:grid-cols-2">
+
+  <div id="header-parent" class="bg-white border-4 border-black rounded-xl shadow-md p-4 md:p-6 text-center md:col-span-2 {% if is_champion %}gold-mode{% endif %}">
+    <h1 id="header">
+      {% if is_champion %} 🥳 PSV IS KAMPIOEN! 🥳 {% else %} 🏆 PSV Kampioenschecker 🏆 {% endif %}
+    </h1>
+  </div>
+
+  <div class="bg-white border-4 border-black rounded-xl shadow-md p-6 flex flex-col justify-between">
+    <h2 class="text-xl font-bold text-center mb-2">Datum mogelijke titel</h2>
+    {% if is_champion %}
+      <p class="text-4xl text-center py-4 font-black text-red-600 uppercase">Schaal is binnen!</p>
+    {% else %}
+      <p class="text-[clamp(1.3rem,3vw,2.5rem)] text-center mb-3 ">{{ date }}</p>
+      <div class="bg-black p-3 rounded flex justify-center">
+        <div class="flex items-center gap-1 flex-nowrap justify-center">
+          <div class="digit relative" id="days1"></div><div class="digit relative" id="days2"></div><span class="text-white text-xs">D</span>
+          <div class="digit relative" id="hours1"></div><div class="digit relative" id="hours2"></div><span class="text-white text-xs">U</span>
+          <div class="digit relative" id="minutes1"></div><div class="digit relative" id="minutes2"></div><span class="text-white text-xs">M</span>
+          <div class="digit relative" id="seconds1"></div><div class="digit relative" id="seconds2"></div><span class="text-white text-xs">S</span>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="bg-white border-4 border-black rounded-xl shadow-md p-6 match-container">
+    <h2 class="text-xl font-bold text-center mb-2">Kampioenswedstrijd</h2>
+    <p class="fit-text font-bold uppercase">{% if is_champion %} PSV Eindhoven {% else %} PSV – {{ opponent }} {% endif %}</p>
+  </div>
+
+  <div class="bg-white border-4 border-black rounded-xl shadow-md p-6 md:col-span-1">
+    <h2 class="text-xl font-bold text-center mb-4 tracking-tighter">Road to #27</h2>
+    <div class="space-y-6 text-sm md:text-base leading-relaxed">
+      {% if is_champion %}
+        <p class="text-center font-bold text-green-600 text-lg">Niemand kan PSV meer inhalen. De schaal is binnen!</p>
+      {% else %}
+        <div class="space-y-4">
+          <p>
+            Momenteel kan <span class="font-bold">{{ second_name }}</span> na PSV het meest aantal punten behalen van maximaal 
+            <span class="font-bold">{{ max_second }}</span> punten.
+          </p>
+
+          {% if is_switched %}
+          <div class="text-[11px] leading-tight text-gray-700 border-l-4 border-blue-500 pl-2 py-1 bg-blue-50">
+            <strong>Analyse:</strong> {{ original_top_name }} heeft momenteel de minste verliespunten, maar omdat zij nog tegen PSV spelen - en uitgangspunt is dat PSV die wint - is de theoretische score van {{ second_name }} nu leidend voor de titelstrijd.
+          </div>
+          {% endif %}
+
+          <p class="">
+            Als PSV de komende <span class="font-bold">{{ aantal_wedstrijden }}</span> wedstrijd(en) wint, staat het op 
+            <span class="font-bold">{{ psv_points_after_wins }}</span> punten en is het met 
+            <span class="font-bold">{{ matches_after }}</span> duels voor het einde niet meer in te halen.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border-4 border-black rounded-xl shadow-md p-4 md:col-span-1">
+    <h2 class="text-xl font-bold text-center mb-4 ">Huidige Stand</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs md:text-sm">
+        <thead>
+          <tr class="border-b-2 border-black">
+            <th class="pb-2">#</th>
+            <th class="pb-2">Team</th>
+            <th class="pb-2 text-center">G</th>
+            <th class="pb-2 text-center">W</th>
+            <th class="pb-2 text-center">G</th>
+            <th class="pb-2 text-center">V</th>
+            <th class="pb-2 text-center">DS</th>
+            <th class="pb-2 text-right text-red-600">Ptn</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for team in top_5 %}
+          <tr class="border-b border-gray-200 {% if team.name == 'PSV' %}bg-red-50 font-bold{% endif %}">
+            <td class="py-2">{{ team.pos }}</td>
+            <td class="py-2">{{ team.name }}</td>
+            <td class="py-2 text-center">{{ team.played }}</td>
+            <td class="py-2 text-center">{{ team.won }}</td>
+            <td class="py-2 text-center">{{ team.draw }}</td>
+            <td class="py-2 text-center">{{ team.lost }}</td>
+            <td class="py-2 text-center">{{ team.diff }}</td>
+            <td class="py-2 text-right text-red-600">{{ team.points }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-4 font-bold text-center text-sm border-t border-black pt-2">
+      Gat PSV – {{ second_name }}: {{ points_gap_now }} punten
+    </p>
+  </div>
+
+  <p class="text-center font-bold md:col-span-2 uppercase text-xs tracking-widest">Laatst bijgewerkt: {{ updated }}</p>
+  <footer class="text-center text-gray-700 md:col-span-2 text-[10px]">© 2026 Mr Worstenbroodje</footer>
+</div>
+
+<script>
+  const header = document.getElementById('header');
+  const parent = document.getElementById('header-parent');
+  function fitHeader() {
+    let size = 48; header.style.fontSize = size + "px"; header.style.visibility = "visible";
+    const maxWidth = parent.clientWidth - 50;
+    while (header.offsetWidth > maxWidth && size > 10) { size -= 1; header.style.fontSize = size + "px"; }
+  }
+  window.addEventListener('resize', fitHeader); window.addEventListener('load', fitHeader);
+  
+  const kickoff = "{{ kickoff_iso }}";
+  const segments = {"0":["a","b","c","d","e","f"],"1":["b","c"],"2":["a","b","g","e","d"],"3":["a","b","g","c","d"],"4":["f","g","b","c"],"5":["a","f","g","c","d"],"6":["a","f","g","c","d","e"],"7":["a","b","c"],"8":["a","b","c","d","e","f","g"],"9":["a","b","c","d","f","g"]};
+  function createSegments(el,n){ el.innerHTML=""; if(!n && n!=="0") return; segments[n].forEach(s=>{ const d=document.createElement("div"); d.className="segment "+s; el.appendChild(d); }); }
+  function updateCountdown(){
+    if(!kickoff) return;
+    let diff = new Date(kickoff) - new Date();
+    if(diff < 0) return;
+    const d=String(Math.floor(diff/86400000)).padStart(2,"0"), h=String(Math.floor(diff/3600000)%24).padStart(2,"0"), m=String(Math.floor(diff/60000)%60).padStart(2,"0"), s=String(Math.floor(diff/1000)%60).padStart(2,"0"), vals=d+h+m+s;
+    ["days1","days2","hours1","hours2","minutes1","minutes2","seconds1","seconds2"].forEach((id,i)=>createSegments(document.getElementById(id),vals[i]));
+  }
+  if(kickoff) { updateCountdown(); setInterval(updateCountdown, 1000); }
+</script>
+</body>
+</html>
