@@ -2,6 +2,7 @@ import os
 import ssl
 import warnings
 import requests
+from fastapi.responses import Response
 from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -158,6 +159,46 @@ async def homepage(request: Request):
         "top_5": stand["top_5"]
     }
     return templates.TemplateResponse("index.html", context)
+
+BASE_URL = "https://wanneerispsvkampioen.nl"  # <-- Pas dit aan!
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    pages = [
+        {
+            "loc": f"{BASE_URL}/",
+            "lastmod": datetime.now().date().isoformat(),
+            "changefreq": "daily",
+            "priority": "1.0"
+        },
+        # Later kun je hier meer pagina’s toevoegen
+    ]
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+    for page in pages:
+        xml += "  <url>\n"
+        xml += f"    <loc>{page['loc']}</loc>\n"
+        xml += f"    <lastmod>{page['lastmod']}</lastmod>\n"
+        xml += f"    <changefreq>{page['changefreq']}</changefreq>\n"
+        xml += f"    <priority>{page['priority']}</priority>\n"
+        xml += "  </url>\n"
+
+    xml += "</urlset>"
+
+    return Response(content=xml, media_type="application/xml")
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    content = f"""
+User-agent: *
+Allow: /
+
+Sitemap: {BASE_URL}/sitemap.xml
+"""
+    return Response(content=content, media_type="text/plain")
+
 
 if __name__ == "__main__":
     import uvicorn
